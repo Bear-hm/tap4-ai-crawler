@@ -11,7 +11,10 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path='./.env')
 
 def validate_json_data(json_data):
-    # print('json_data', json_data)
+    '''
+    description: 插入数据库之前校验数据
+    return {boolean}
+    '''    
     if json_data is None:
         print("ERROR: 获取数据失败，json_data 为 None")
         return False
@@ -26,9 +29,16 @@ def validate_json_data(json_data):
         return False
     return True
 
-# 插入数据
+
 async def insert_website_data(connection_string, json_data, tag, category):
-    """更新/插入数据库数据"""
+    '''
+    description: 插入/更新数据库中的数据
+    param {*} connection_string supabase连接字符串
+    param {*} json_data 爬虫返回的数据
+    param {*} tag 二级分类
+    param {*} category 一级分类
+    return {*}
+    '''
     if not validate_json_data(json_data):
         return
     conn = None
@@ -64,6 +74,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
                     data[f"detail_{lang_suffix}"] = lang_data.get("detail")
                     data[f"introduction_{lang_suffix}"] = lang_data.get("introduction")
                     data[f"website_data_{lang_suffix}"] = lang_data.get("features")
+            # 如果有为空的设为None
             for field in fields:
                 if field not in data:
                     data[field] = None
@@ -82,7 +93,8 @@ async def insert_website_data(connection_string, json_data, tag, category):
                 new_id = (max_id + 1) if max_id is not None else 1
                 data["id"] = new_id
                 print('new_id', new_id)
-                table_columns = await conn.fetch('SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND table_schema = $2', table_name, schema_name)
+                query = f'SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND table_schema = $2'
+                table_columns = await conn.fetch(query, table_name, schema_name)
                 
                 table_columns = [col['column_name'] for col in table_columns]
 
@@ -129,6 +141,7 @@ async def check_existing_data(site_url, tags, category):
     except Exception as e:
         print(f"INFO: Error checking existing data: {e}")
         return False
+
 
 # 查找/更新网站的部分数据， field_name区分
 async def update_website_field(connection_string, json_data, tag, category, field_name):
@@ -194,8 +207,8 @@ async def update_website_introduction(connection_string, json_data, tag, categor
 async def update_features(connection_string, json_data, tag, category):
     await update_website_field(connection_string, json_data, tag, category, "website_data")
 
-# 将csv文件里面的数据放入
 async def insert_data_from_csv(connection_string, csv_file_path, table_name):
+    """将csv文件里面的数据放入"""
     conn = None
     try:
         conn = await asyncpg.connect(dsn=connection_string, statement_cache_size=0)
@@ -272,7 +285,6 @@ async def main():
     # csv_file_path = './util/file_util/Data/tes.csv' 
     # csv_file_path = './util/file_util/Data/saved_file.csv' 
     # await insert_data_from_csv(connection_string, csv_file_path, table_name)
-
     file_path = './Data/res_test.json'
     data = read_file(file_path)
     test_category = "AI工具"

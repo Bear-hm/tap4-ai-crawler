@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 util = CommonUtil()
 
-class LLMUtil:
+class CheckUtil:
     def __init__(self):
         load_dotenv()
+        # 验证大模型
         self.llm_type = os.getenv('LLM_TYPE')
         if self.llm_type == 'groq':
             self.init_groq_config()

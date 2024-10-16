@@ -52,7 +52,7 @@ class AsyncURLRequest(URLRequest):
 async def scrape(request: URLRequest, authorization: Optional[str] = Header(None)):
     print(f'Received request: {request}')
     url = request.url
-    tags = request.tags  # tag数组
+    tags = request.tags 
     languages = request.languages  # 需要翻译的多语言列表
     category = request.category
     if system_auth_secret:
@@ -60,14 +60,13 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
         validate_authorization(authorization)
 
     result = await website_crawler.scrape_website(url.strip(), tags, languages)
-
-    # 若result为None,则 code="10001"，msg="处理异常，请稍后重试"
-    code = 200
-    msg = 'success'
+    # 若result为None,则 code="10001"
     if result is None:
         code = 10001
         msg = 'fail'
-
+    
+    code = 200
+    msg = 'success'
     # 将数据映射到 'data' 键下
     response = {
         'code': code,
@@ -81,7 +80,10 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
 
     print("INFO: Scraping data successfully. Waiting insert data to database.")
     logger.info("INFO: Scraping data successfully. Waiting insert data to database.")
+   
+    # 开始插入数据库
     await insert_website_data(supabass_url, result, tags, category)
+
     return response
 
 @app.post('/site/crawl_async')
@@ -185,8 +187,8 @@ async def scrape_introduction(request: URLRequest, authorization: Optional[str] 
 async def scrape_website_data(request: URLRequest, authorization: Optional[str] = Header(None)):
     print(f'Received detail request: {request}')
     url = request.url
-    tags = request.tags  # tag数组
-    languages = request.languages  # 需要翻译的多语言列表
+    tags = request.tags
+    languages = request.languages
     category = request.category
     if system_auth_secret:
         # 配置了非空的auth_secret，才验证

@@ -31,7 +31,10 @@ class WebsitCrawler:
 
     # 爬取指定URL网页内容
     async def scrape_website(self, url, tags, languages):
-        # 开始爬虫处理
+        '''
+        description: 爬取网站全部内容及多语言处理
+        return {*}
+        '''    
         try:
             # 记录程序开始时间
             start_time = int(time.time())
@@ -48,6 +51,7 @@ class WebsitCrawler:
                                             handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False)
 
             page = await self.browser.newPage()
+
             # 设置用户代理
             await page.setUserAgent(random.choice(global_agent_headers))
 
@@ -58,22 +62,21 @@ class WebsitCrawler:
             max_retries = 3
             retry_delay = 2 
 
+            # 页面加载重试
             for attempt in range(max_retries):
                 try:
                     response =  await page.goto(url, {'timeout': 70000, 'waitUntil': ['load', 'networkidle0']})
-                    
                     if response is None:
-                        # logger.error("页面加载失败，无响应")
                         return {'error': '页面加载失败，无响应'}
                 except Exception as e:
                     logger.info(f'页面加载超时, 尝试重新加载 (尝试次数: {attempt + 1}/{max_retries}): {e}')
                     if attempt == max_retries - 1:
                         logger.error(f'页面加载超时, 达到最大重试次数: {e}')
                         return {'error': '页面加载超时, 达到最大重试次数: {e}'}
-                    await asyncio.sleep(retry_delay)  # 等待一段时间后重试
+                    await asyncio.sleep(retry_delay)
+            
             
             # 等待页面加载，提高获取页面的质量
-            await page.waitForSelector('body', timeout=5000)
             await page.waitFor(5000)
 
             # 获取网页内容
@@ -82,9 +85,11 @@ class WebsitCrawler:
 
             # 通过标签名提取内容
             title = soup.title.string.strip() if soup.title else ''
+
             # 无title时
             if not title:
                 title = llm.process_title(url)
+                
             # 根据url提取域名生成name
             name = CommonUtil.get_name_by_url(url)
 
@@ -102,6 +107,7 @@ class WebsitCrawler:
             # 使用llm工具生成description
             if not description:
                 description = llm.process_description(url)
+            
             logger.info(f"url:{url}, title:{title},description:{description}")
 
             # 生成网站截图
