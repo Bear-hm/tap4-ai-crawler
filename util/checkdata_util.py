@@ -72,7 +72,18 @@ class CheckUtil:
 
         self.openai_tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
-    def call_gpt(self, script, system_prompt, temperature=1.0, top_p=1.0, max_retries=2, delay=5):
+    '''
+    description: 调用Gpt函数
+    param {*} self
+    param {*} script 用户输入文本
+    param {*} system_prompt 输入的prompt
+    param {*} temperature 控制生成文本多样性
+    param {*} top_p 采样概率
+    param {*} max_retries 调用失败最大重试次数
+    param {*} delay 每次重试前的延迟时间
+    return {*}
+    '''    
+    def call_gpt(self, script, system_prompt, temperature=1.0, top_p=1.0, max_retries=3, delay=5):
         openai_headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.openai_api_key}",
@@ -168,36 +179,6 @@ class CheckUtil:
             result = result.replace('"', '')
         return result
 
-    def process_detail(self, user_prompt, variable_map=None, llm_type='openai'):
-        logger.info("正在处理Detail...")
-        print(f"Detail的user_prompt: {user_prompt}")
+    def check_detail(self, user_prompt, variable_map=None, llm_type='openai'):
+        logger.info("正在检查Detail...")
         return self.process_prompt(self.detail_sys_prompt, user_prompt, variable_map, llm_type)
-
-    def process_introduction(self, user_prompt, variable_map=None, llm_type='openai'):
-        logger.info(f"正在处理introduction...")
-        result = self.process_prompt(self.introduction_sys_prompt, user_prompt, variable_map, llm_type)
-        return util.detail_handle(result)
-
-    def process_features(self, user_prompt, variable_map=None, llm_type='openai'):
-        logger.info(f"正在处理features...")
-        return self.process_prompt(self.feature_sys_prompt, user_prompt, variable_map, llm_type)
-
-    def process_title(self, user_prompt, variable_map=None, llm_type='openai'):
-        logger.info("正在处理title...")
-        result = self.process_prompt(self.title_sys_prompt, user_prompt, variable_map, llm_type)
-        if result:
-            result = result.replace('"', '')
-        return result
-    
-    def process_language(self, language, user_prompt):
-        logger.info(f"正在处理多语言:{language}, user_prompt:{user_prompt}")
-        # 如果language 包含 English字符，则直接返回
-        if 'english'.lower() in language.lower():
-            result = user_prompt
-        else:
-            result = self.process_prompt(self.language_sys_prompt.replace("{language}", language), user_prompt)
-            if result and not user_prompt.startswith("#"):
-                # 如果原始输入没有包含###开头的markdown标记，则去掉markdown标记
-                result = result.replace("### ", "").replace("## ", "").replace("# ", "").replace("**", "")
-        logger.info(f"多语言:{language}, 处理结果:{result}")
-        return result

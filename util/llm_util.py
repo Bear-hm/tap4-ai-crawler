@@ -104,14 +104,12 @@ class LLMUtil:
         if not sys_prompt or not user_prompt:
             logger.info(f"LLM无需处理，sys_prompt或user_prompt为空")
             return None
-
         if isinstance(variable_map, dict):
             for key, value in variable_map.items():
                 if value:
                     sys_prompt = sys_prompt.replace(key, value)
                     user_prompt = user_prompt.replace(key, value)
                     logger.info(f"替换变量{key}为{value}")
-
         logger.info("LLM正在处理")
         try:
             if self.llm_type == 'groq' or (self.llm_type == 'all' and llm_type == 'groq'):
@@ -121,7 +119,6 @@ class LLMUtil:
                     logger.info(f"用户输入长度超过{self.groq_max_tokens}，进行截取")
                     truncated_tokens = tokens[:self.groq_max_tokens]
                     user_prompt = self.groq_tokenizer.decode(truncated_tokens)
-
                 chat_completion = self.groq_client.chat.completions.create(
                     messages=[
                         {
@@ -136,24 +133,24 @@ class LLMUtil:
                     model=self.groq_model,
                     temperature=0.2,
                 )
+                if chat_completion.choices[0] and chat_completion.choices[0].message:
+                    logger.info(f"LLM完成处理，成功响应!")
+                    return chat_completion.choices[0].message.content
+                else:
+                    logger.info("LLM完成处理，处理结果为空")
+                    return None
             elif self.llm_type == 'openai' or (self.llm_type == 'all' and llm_type == 'openai'):
                 logger.info("正在使用openai处理")
                 tokens = self.openai_tokenizer.encode(user_prompt)
+
                 if len(tokens) > self.openai_max_tokens:
                     logger.info(f"用户输入长度超过{self.openai_max_tokens}，进行截取")
                     truncated_tokens = tokens[:self.openai_max_tokens]
                     user_prompt = self.openai_tokenizer.decode(truncated_tokens)
 
                 return self.call_gpt(user_prompt, sys_prompt)
-
-            if chat_completion.choices[0] and chat_completion.choices[0].message:
-                logger.info(f"LLM完成处理，成功响应!")
-                return chat_completion.choices[0].message.content
-            else:
-                logger.info("LLM完成处理，处理结果为空")
-                return None
         except Exception as e:
-            logger.error(f"LLM处理失败", e)
+            logger.error(f"LLM处理失败{e}")
             return None
 
     def process_description(self, user_prompt, variable_map=None, llm_type='openai'):
@@ -195,8 +192,8 @@ class LLMUtil:
             result = user_prompt
         else:
             result = self.process_prompt(self.language_sys_prompt.replace("{language}", language), user_prompt)
-            if result and not user_prompt.startswith("#"):
-                # 如果原始输入没有包含###开头的markdown标记，则去掉markdown标记
-                result = result.replace("### ", "").replace("## ", "").replace("# ", "").replace("**", "")
+            # if result and not user_prompt.startswith("#"):
+            #     # 如果原始输入没有包含###开头的markdown标记，则去掉markdown标记
+            #     result = result.replace("### ", "").replace("## ", "").replace("# ", "").replace("**", "")
         logger.info(f"多语言:{language}, 处理结果:{result}")
         return result

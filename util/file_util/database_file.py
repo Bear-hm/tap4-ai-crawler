@@ -173,12 +173,63 @@ def remove_rows_by_id(file_path, start, end, output_path, save_mode=False):
     print(f"成功{action}从 {start} 到 {end} 的数据，保存至 {output_path}.")
 
 
+def obtain_csv_data(file_path, output_path):
+    """
+    从CSV文件中提取所需字段并保存到新的CSV文件。
+
+    :param file_path: 输入 CSV 文件路径
+    :param output_path: 输出 CSV 文件路径
+    """
+    required_columns = ['id', 'category_name', 'tag_name', 'url', 'name']
+    
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        print(f"文件 {file_path} 未找到。")
+        return
+    except Exception as e:
+        print(f"读取文件时出错: {e}")
+        return
+
+    # 提取所需字段
+    extracted_data = df[required_columns]
+
+    # 保存提取的数据到新的CSV文件
+    extracted_data.to_csv(output_path, index=False)
+    print(f"成功提取数据并保存至 {output_path}。")
+
+'''
+description: 
+param {*} file_path 输入文件
+param {*} output_path 输出文件
+return {*}
+'''
+def convert_data_format(file_path, output_path):
+    required_columns = ['category_name', 'tag_name', 'url', 'name']
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        print(f"文件 {file_path} 未找到。")
+        return
+    except Exception as e:
+        print(f"读取文件时出错: {e}")
+        return
+    df['category_name'] = df['category_name'].str.strip('[]').str.replace('"""', '', regex=False).str.replace('"', '', regex=False)
+    
+    df['tag_name'] = df['tag_name'].str.strip('[]').str.replace('"""', '', regex=False).str.replace('"', '', regex=False)
+    df['tag_name'] = df['tag_name'].apply(lambda x: [x])  # 转换为列表格式
+
+    extracted_data = df[required_columns]
+    # 保存提取的数据到新的CSV文件
+    extracted_data.to_csv(output_path, index=False)
+    print(f"成功提取数据并处理了数据格式保存至 {output_path}。")
+
 if __name__ == '__main__':
     input_path = "./Data/web_navigation_rows.csv"
     output_path = "./Data/web_navigation_rowsresetid.csv"
-    # remove_rows_by_id('./Data/cate.csv', 1, 300, './Data/delete_modified_file.csv')
-    remove_rows_by_id('./Data/cate.csv', 901, 1192, './Data/saved_file.csv', save_mode=True)
-
+    # remove_rows_by_id('./Data/cate.csv', 901, 1192, './Data/saved_file.csv', save_mode=True)
+    # obtain_csv_data('./Data/web_navigation_rows.csv', './Data/database_website_data.csv')
+    convert_data_format('./Data/database_website_data.csv', './Data/website_data.csv')
     # reset_id_column(input_path, output_path)
     # add_quotation(
     #     './Data/navigation_tag_rows_resetid.csv',

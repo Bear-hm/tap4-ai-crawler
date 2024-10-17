@@ -143,7 +143,6 @@ async def check_existing_data(site_url, tags, category):
         return False
 
 
-# 查找/更新网站的部分数据， field_name区分
 async def update_website_field(connection_string, json_data, tag, category, field_name):
     # print('update_website_field:', field_name)
     if json_data is None or not json_data.get("url"):

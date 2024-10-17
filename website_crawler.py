@@ -28,13 +28,92 @@ global_agent_headers = [
 class WebsitCrawler:
     def __init__(self):
         self.browser = None
+    
+    '''
+    description: 打开网页获取网页内容
+    param {*} self
+    param {*} url 网址
+    return {*} soup: 网站html结构 screenshot_key: 网站截图 thumnbail_key: 网站缩略图截图
+    '''
+    async def obtain_html_data(self, url):
+        # 检查并启动浏览器
+        if self.browser is None:
+            self.browser = await launch(headless=True,
+                                        ignoreDefaultArgs=["--enable-automation"],
+                                        ignoreHTTPSErrors=True,
+                                        args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
+                                                '--disable-software-rasterizer', '--disable-setuid-sandbox'],
+                                        handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False)
+        # 打开新页面
+        page = await self.browser.newPage()
+        try:
+            # 设置用户代理
+            await page.setUserAgent(random.choice(global_agent_headers))
+            # 设置页面视口大小并访问具体URL
+            width = 1920  # 默认宽度为 1920
+            height = 1080  # 默认高度为 1080
+            await page.setViewport({'width': width, 'height': height})
 
-    # 爬取指定URL网页内容
+            # 页面重试机制
+            max_retries = 3
+            retry_delay = 2 
+            for attempt in range(max_retries):
+                try:
+                    response =  await page.goto(url, {'timeout': 70000, 'waitUntil': ['load', 'networkidle0']})
+                    if response is None:
+                        return {'error': '页面加载失败，无响应'}
+                except Exception as e:
+                    logger.info(f'页面加载超时, 尝试重新加载 (尝试次数: {attempt + 1}/{max_retries}): {e}')
+                    if attempt == max_retries - 1:
+                        logger.error(f'页面加载超时, 达到最大重试次数: {e}')
+                        return None
+                    await asyncio.sleep(retry_delay)
+
+            # 等待页面加载，提高获取页面的质量
+            await page.waitForSelector('body')
+
+            origin_content = await page.content()
+            soup = BeautifulSoup(origin_content, 'html.parser')
+            
+            # 获取网站截图信息
+            image_key = oss.get_default_file_key(url)
+            dimensions = await page.evaluate(f'''(width, height) => {{
+                return {{
+                    width: {width},
+                    height: {height},
+                    deviceScaleFactor: window.devicePixelRatio
+                }};
+            }}''', width, height)
+            
+            screenshot_path = './' + url.replace("https://", "").replace("http://", "").replace("/", "").replace(".",
+                                                                                                                 "-") + '.png'
+            await page.screenshot({'path': screenshot_path, 'clip': {
+                'x': 0,
+                'y': 0,
+                'width': dimensions['width'],
+                'height': dimensions['height']
+            }})
+
+            screenshot_key = oss.upload_file_to_r2(screenshot_path, image_key)
+
+            thumnbail_key = oss.generate_thumbnail_image(url, image_key)
+            return soup, screenshot_key, thumnbail_key
+        except Exception as e:
+            logger.error(f"获取网页内容时发生错误: {e}")
+            return None
+        finally:
+            await page.close() 
+    
+    '''
+    description: 获取网站所有数据
+    param {*} self
+    param {*} url 网址
+    param {*} tags 二级标签
+    param {*} languages 多语言数组
+    return {*}
+    '''    
+    
     async def scrape_website(self, url, tags, languages):
-        '''
-        description: 爬取网站全部内容及多语言处理
-        return {*}
-        '''    
         try:
             # 记录程序开始时间
             start_time = int(time.time())
@@ -83,12 +162,10 @@ class WebsitCrawler:
             origin_content = await page.content()
             soup = BeautifulSoup(origin_content, 'html.parser')
 
-            # 通过标签名提取内容
             title = soup.title.string.strip() if soup.title else ''
 
-            # 无title时
-            if not title:
-                title = llm.process_title(url)
+            # if not title:
+            #     title = llm.process_title(url)
                 
             # 根据url提取域名生成name
             name = CommonUtil.get_name_by_url(url)
@@ -100,13 +177,12 @@ class WebsitCrawler:
             if meta_description:
                 description = meta_description['content'].strip()
 
-            if not description:
-                meta_description = soup.find('meta', attrs={'property': 'og:description'})
-                description = meta_description['content'].strip() if meta_description else ''
+            # if not description:
+            #     meta_description = soup.find('meta', attrs={'property': 'og:description'})
+            #     description = meta_description['content'].strip() if meta_description else ''
             
-            # 使用llm工具生成description
-            if not description:
-                description = llm.process_description(url)
+            # if not description:
+            #     description = llm.process_description(url)
             
             logger.info(f"url:{url}, title:{title},description:{description}")
 
@@ -142,30 +218,29 @@ class WebsitCrawler:
             # return;
             # 使用llm工具处理content
             detail = llm.process_detail(content)
-            if not detail:
-                logger.info(url + "站点处理detail为空，正在重试")
-                detail = llm.process_detail(content)
+            # if not detail:
+            #     logger.info(url + "站点处理detail为空，正在重试")
+            #     detail = llm.process_detail(content)
 
-              # 使用llm工具处理introduction
             introduction = llm.process_introduction(content)
-            if not introduction:
-                logger.info(url + "站点处理introduction为空，正在重试")
-                introduction = llm.process_introduction(content)
+            # if not introduction:
+            #     logger.info(url + "站点处理introduction为空，正在重试")
+            #     introduction = llm.process_introduction(content)
 
             features = llm.process_features(content)
-            if not features:
-                logger.info(url + "站点处理features为空，正在重试")
-                features = llm.process_features(content)
+            # if not features:
+            #     logger.info(url + "站点处理features为空，正在重试")
+            #     features = llm.process_features(content)
 
-            if not all([detail, introduction, features]):
+
+            if not all([title, description, detail, introduction, features]):
                 logger.error(f"URL: {url} - 数据有空值，返回错误")
                 return {'error': '处理失败：一个或多个字段为空'}
                 
             await page.close()
 
-            # 循环languages数组， 使用llm工具生成各种语言
+            # 循环languages数组
             processed_languages = []
-
             # 翻译为多语言之前进行数据检查
             if not all([title, description, detail, introduction, features]):
                 logger.warning(f"URL: {url} - 一个或多个字段为空，跳过多语言处理")
@@ -173,7 +248,6 @@ class WebsitCrawler:
             if detail.startswith("### What is {product_name}"):
                 logger.warning(f"URL: {url} - detail处理为原模板，生成错误")
                 return {'error': '有数据不全，返回错误'}
-
             if languages:
                 for language in languages:
                     logger.info("正在处理" + url + "站点，生成" + language + "语言")
@@ -182,6 +256,7 @@ class WebsitCrawler:
                     processed_detail = llm.process_language(language, detail)
                     processed_introduction = llm.process_language(language, introduction)
                     processed_features = llm.process_language(language, features)
+
                     processed_languages.append({'language': language, 'title': processed_title,
                                                 'description': processed_description, 'detail': processed_detail,
                                                 'introduction': processed_introduction, 'features': processed_features})
@@ -248,7 +323,6 @@ class WebsitCrawler:
                 logger.info(url + "站点处理detail为空，正在重试")
                 detail = llm.process_detail(content)
 
-
             await page.close()
             
             processed_languages = []
@@ -257,6 +331,7 @@ class WebsitCrawler:
                     logger.info(f"正在处理{url}站点，生成{language}语言的detail")
                     processed_detail = llm.process_language(language, detail)
                     processed_languages.append({'language': language, 'detail': processed_detail})
+            
             logger.info(url + "站点详情处理成功")
             return {
                 'url': url,
