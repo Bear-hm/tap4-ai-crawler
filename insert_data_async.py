@@ -82,6 +82,12 @@ async def insert_website_data(connection_string, json_data, tag, category):
             if existing_data:
                 update_id = existing_data['id']
                 print('更新id为：', update_id)
+                # 更新不更换关键数据
+                data.pop("image_url", None)
+                data.pop("thumbnail_url", None)
+                data.pop("url", None)
+                data.pop("category_name", None)
+                data.pop("tag_name", None)
                 data.pop("id", None)
                 update_set = ', '.join(f"{field} = ${i + 1}" for i, field in enumerate(data.keys()))
                 update_query = f'UPDATE {schema_name}.{table_name} SET {update_set} WHERE id = ${len(data) + 1}'

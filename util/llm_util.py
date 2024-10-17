@@ -62,11 +62,11 @@ class LLMUtil:
     def init_openai_config(self):
         logger.info("Initializing OpenAI configuration...")
         
-        self.openai_api_key = os.getenv('CUSTOM_API_ACCESS_TOKEN')
+        self.openai_api_key = os.getenv('CUSTOM_API_ACCESS_TOKEN', "ak-Nk9p2YsSoMlzpabAzFSAd7gC48a3M74TZkjhrTDLNIEWtmbt")
         self.openai_model = os.getenv('CUSTOM_API_MODEL', "gpt-4o-mini")
         self.openai_max_tokens = int(os.getenv('OPENAI_MAX_TOKENS', 5000))
         
-        self.api_url = os.getenv('CUSTOM_API_URL')
+        self.api_url = os.getenv('CUSTOM_API_URL', "https://api.nextapi.fun/api/openai/v1/chat/completions")
         logger.info(f"API URL set to: {self.api_url}")
 
         self.openai_tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
@@ -174,7 +174,6 @@ class LLMUtil:
     '''
     def process_detail(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在处理Detail...")
-        print(f"Detail的user_prompt: {user_prompt}")
         return self.process_prompt(self.detail_sys_prompt, user_prompt, variable_map, llm_type)
 
     '''
