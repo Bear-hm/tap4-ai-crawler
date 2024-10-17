@@ -14,7 +14,7 @@ load_dotenv()
 app = FastAPI()
 website_crawler = WebsitCrawler()
 
-system_auth_secret = os.getenv('AUTH_SECRET')\
+system_auth_secret = os.getenv('AUTH_SECRET')
 
 
 # supabase数据库连接字符串

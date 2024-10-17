@@ -3,7 +3,6 @@ import random
 import requests
 import time
 import logging
-
 import tiktoken
 from dotenv import load_dotenv
 from groq import Groq
@@ -33,13 +32,13 @@ class CheckUtil:
         else:
             logger.error("LLM_TYPE environment variable not found or is empty.")
 
-        self.description_sys_prompt = os.getenv('DESCRIPTION_SYS_PROMPT')
-        self.detail_sys_prompt = os.getenv('DETAIL_SYS_PROMPT')
-        self.introduction_sys_prompt = os.getenv('INTRODUCTION_SYS_PROMPT')
-        self.feature_sys_prompt = os.getenv('FEATURE_SYS_PROMPT')
-        self.format_sys_prompt = os.getenv('FORMAT_SYS_PROMPT')
-        self.language_sys_prompt = os.getenv('LANGUAGE_SYS_PROMPT')
-        self.title_sys_prompt = os.getenv('TITLE_SYS_PROMPT')
+        self.description_check_prompt = os.getenv('DESCRIPTION_CHECK_PROMPT')
+        self.detail_check_prompt = os.getenv('DETAIL_CHECK_PROMPT')
+        self.introduction_check_prompt = os.getenv('INTRODUCTION_CHECK_PROMPT')
+        self.feature_check_prompt = os.getenv('FEATURE_CHECK_PROMPT')
+        self.format_check_prompt = os.getenv('FORMAT_SYS_PROMPT')
+        self.language_check_prompt = os.getenv('LANGUAGE_CHECK_PROMPT')
+        self.title_check_prompt = os.getenv('TITLE_CHECK_PROMPT')
     
     def init_groq_config(self):
         logger.info("init_groq_config")
@@ -83,7 +82,7 @@ class CheckUtil:
     param {*} delay 每次重试前的延迟时间
     return {*}
     '''    
-    def call_gpt(self, script, system_prompt, temperature=1.0, top_p=1.0, max_retries=3, delay=5):
+    def call_gpt(self, script, system_prompt, temperature=0.2, top_p=1.0, max_retries=3, delay=5):
         openai_headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.openai_api_key}",
@@ -168,17 +167,51 @@ class CheckUtil:
             logger.error(f"LLM处理失败", e)
             return None
 
-    def process_description(self, user_prompt, variable_map=None, llm_type='openai'):
-        '''
-        description: 大模型处理description描述(对应数据库的content)
-        return {*}
-        '''        
-        logger.info("正在处理description...")
-        result = self.process_prompt(self.description_sys_prompt, user_prompt, variable_map, llm_type)
+    def check_title(self, user_prompt, variable_map=None, llm_type='openai'):    
+        logger.info("正在检查title...")
+        result = self.process_prompt(self.title_check_prompt, user_prompt, variable_map, llm_type)
+        if result:
+            result = result.replace('"', '')
+        return result
+    
+    def check_description(self, user_prompt, variable_map=None, llm_type='openai'):    
+        logger.info("正在检查description...")
+        result = self.process_prompt(self.description_check_prompt, user_prompt, variable_map, llm_type)
+        return result
+
+    def check_introduction(self, user_prompt, variable_map=None, llm_type='openai'):    
+        logger.info("正在检查title...")
+        result = self.process_prompt(self.introduction_check_prompt, user_prompt, variable_map, llm_type)
+        if result:
+            result = result.replace('"', '')
+        return result
+
+    def check_feature(self, user_prompt, variable_map=None, llm_type='openai'):    
+        logger.info("正在检查feature...")
+        result = self.process_prompt(self.feature_check_prompt, user_prompt, variable_map, llm_type)
         if result:
             result = result.replace('"', '')
         return result
 
     def check_detail(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在检查Detail...")
-        return self.process_prompt(self.detail_sys_prompt, user_prompt, variable_map, llm_type)
+        return self.process_prompt(self.detail_check_prompt, user_prompt, variable_map, llm_type)
+    
+    def check_format(self, user_prompt, variable_map=None, llm_type='openai'):
+        logger.info(f"正在处理 格式化...")
+        return util.detail_handle(self.format_check_prompt(self.format_sys_prompt, user_prompt, variable_map, llm_type))
+    
+    def check_language(self, language, user_prompt):
+        logger.info(f"正在检查多语言:{language}, user_prompt:{user_prompt}")
+        result = self.process_prompt(self.language_check_prompt.replace("{language}", language), user_prompt)
+        logger.info(f"多语言:{language}, 处理结果:{result}")
+        return result
+# if detail.startswith("### What is {product_name}"):
+#     logger.warning(f"URL: {url} - detail处理为原模板，生成错误")
+#     return {'error': '有数据不全，返回错误'}
+# if json_data.get("title") in ["Just a moment...", "404"]:
+#     print(f"INFO: 检测到无效标题 '{json_data.get('title')}'，停止插入数据。")
+#     return False
+# if json_data.get("detail", "").startswith("### What is {product_name}?\n{product_name} is a"):
+#     print(f"INFO: 无效detail开头，停止插入数据。")
+#     return False

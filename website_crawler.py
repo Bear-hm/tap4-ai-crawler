@@ -7,12 +7,14 @@ from pyppeteer import launch
 from util.common_util import CommonUtil
 from util.llm_util import LLMUtil
 from util.oss_util import OSSUtil
+from util.checkdata_util import CheckUtil
 from logger_config import setup_logger  # 导入日志配置
 
 #设置日志记录
 logger = setup_logger()
 llm = LLMUtil()
 oss = OSSUtil()
+check = CheckUtil()
 
 global_agent_headers = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.96 Safari/537.36",
@@ -111,8 +113,7 @@ class WebsitCrawler:
     param {*} tags 二级标签
     param {*} languages 多语言数组
     return {*}
-    '''    
-    
+    '''  
     async def scrape_website(self, url, tags, languages):
         try:
             # 记录程序开始时间
@@ -154,7 +155,6 @@ class WebsitCrawler:
                         return {'error': '页面加载超时, 达到最大重试次数: {e}'}
                     await asyncio.sleep(retry_delay)
             
-            
             # 等待页面加载，提高获取页面的质量
             await page.waitFor(5000)
 
@@ -163,26 +163,22 @@ class WebsitCrawler:
             soup = BeautifulSoup(origin_content, 'html.parser')
 
             title = soup.title.string.strip() if soup.title else ''
-
-            # if not title:
-            #     title = llm.process_title(url)
-                
+            if not title:
+                title = check.check_title(llm.process_title(url))
             # 根据url提取域名生成name
+
             name = CommonUtil.get_name_by_url(url)
 
             # 获取网页描述
             description = ''
             meta_description = soup.find('meta', attrs={'name': 'description'})
-            
             if meta_description:
                 description = meta_description['content'].strip()
-
-            # if not description:
-            #     meta_description = soup.find('meta', attrs={'property': 'og:description'})
-            #     description = meta_description['content'].strip() if meta_description else ''
-            
-            # if not description:
-            #     description = llm.process_description(url)
+            if not description:
+                meta_description = soup.find('meta', attrs={'property': 'og:description'})
+                description = meta_description['content'].strip()
+            if not description:
+                description = check.check_description(llm.process_description(url))
             
             logger.info(f"url:{url}, title:{title},description:{description}")
 
@@ -216,22 +212,12 @@ class WebsitCrawler:
             content = soup.get_text()
 
             # return;
-            # 使用llm工具处理content
-            detail = llm.process_detail(content)
-            # if not detail:
-            #     logger.info(url + "站点处理detail为空，正在重试")
-            #     detail = llm.process_detail(content)
-
-            introduction = llm.process_introduction(content)
-            # if not introduction:
-            #     logger.info(url + "站点处理introduction为空，正在重试")
-            #     introduction = llm.process_introduction(content)
-
-            features = llm.process_features(content)
-            # if not features:
-            #     logger.info(url + "站点处理features为空，正在重试")
-            #     features = llm.process_features(content)
-
+            
+            detail = check.check_detail(llm.process_detail(content))
+            
+            introduction = check.check_introduction(llm.process_introduction(content))
+                
+            features = check.check_feature(llm.process_features(content))
 
             if not all([title, description, detail, introduction, features]):
                 logger.error(f"URL: {url} - 数据有空值，返回错误")
@@ -241,21 +227,23 @@ class WebsitCrawler:
 
             # 循环languages数组
             processed_languages = []
-            # 翻译为多语言之前进行数据检查
+
             if not all([title, description, detail, introduction, features]):
                 logger.warning(f"URL: {url} - 一个或多个字段为空，跳过多语言处理")
                 return {'error': '有数据不全，返回错误'}
-            if detail.startswith("### What is {product_name}"):
-                logger.warning(f"URL: {url} - detail处理为原模板，生成错误")
-                return {'error': '有数据不全，返回错误'}
+            
             if languages:
                 for language in languages:
                     logger.info("正在处理" + url + "站点，生成" + language + "语言")
-                    processed_title = llm.process_language(language, title)
-                    processed_description = llm.process_language(language, description)
-                    processed_detail = llm.process_language(language, detail)
-                    processed_introduction = llm.process_language(language, introduction)
-                    processed_features = llm.process_language(language, features)
+                    processed_title = check.check_language(language, llm.process_language(language, title))
+                    
+                    processed_description = check.check_language(language, llm.process_language(language, description))
+                    
+                    processed_detail = check.check_language(language, llm.process_language(language, detail))
+                    
+                    processed_introduction = check.check_language(language, llm.process_language(language, introduction))
+                    
+                    processed_features = check.check_language(language, llm.process_language(language, features))
 
                     processed_languages.append({'language': language, 'title': processed_title,
                                                 'description': processed_description, 'detail': processed_detail,

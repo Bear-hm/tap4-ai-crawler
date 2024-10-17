@@ -22,6 +22,7 @@ class LLMUtil:
     def __init__(self):
         load_dotenv()
         self.llm_type = os.getenv('LLM_TYPE')
+        
         if self.llm_type == 'groq':
             self.init_groq_config()
         elif self.llm_type == 'openai':
@@ -36,7 +37,6 @@ class LLMUtil:
         self.detail_sys_prompt = os.getenv('DETAIL_SYS_PROMPT')
         self.introduction_sys_prompt = os.getenv('INTRODUCTION_SYS_PROMPT')
         self.feature_sys_prompt = os.getenv('FEATURE_SYS_PROMPT')
-        self.format_sys_prompt = os.getenv('FORMAT_SYS_PROMPT')
         self.language_sys_prompt = os.getenv('LANGUAGE_SYS_PROMPT')
         self.title_sys_prompt = os.getenv('TITLE_SYS_PROMPT')
     
@@ -62,16 +62,16 @@ class LLMUtil:
     def init_openai_config(self):
         logger.info("Initializing OpenAI configuration...")
         
-        self.openai_api_key = os.getenv('CUSTOM_API_ACCESS_TOKEN', "ak-Nk9p2YsSoMlzpabAzFSAd7gC48a3M74TZkjhrTDLNIEWtmbt")
+        self.openai_api_key = os.getenv('CUSTOM_API_ACCESS_TOKEN')
         self.openai_model = os.getenv('CUSTOM_API_MODEL', "gpt-4o-mini")
         self.openai_max_tokens = int(os.getenv('OPENAI_MAX_TOKENS', 5000))
         
-        self.api_url = os.getenv('CUSTOM_API_URL', "https://api.nextapi.fun/api/openai/v1/chat/completions")
+        self.api_url = os.getenv('CUSTOM_API_URL')
         logger.info(f"API URL set to: {self.api_url}")
 
         self.openai_tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
-    def call_gpt(self, script, system_prompt, temperature=1.0, top_p=1.0, max_retries=2, delay=5):
+    def call_gpt(self, script, system_prompt, temperature=0.2, top_p=1.0, max_retries=2, delay=5):
         openai_headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.openai_api_key}",
@@ -164,20 +164,43 @@ class LLMUtil:
             result = result.replace('"', '')
         return result
 
+    '''
+    description: 处理FQA
+    param {*} self
+    param {*} user_prompt
+    param {*} variable_map
+    param {*} llm_type
+    return {*}
+    '''
     def process_detail(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在处理Detail...")
         print(f"Detail的user_prompt: {user_prompt}")
         return self.process_prompt(self.detail_sys_prompt, user_prompt, variable_map, llm_type)
 
+    '''
+    description: 处理简介
+    param {*} self
+    param {*} user_prompt
+    param {*} variable_map
+    param {*} llm_type
+    return {*}
+    '''
     def process_introduction(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info(f"正在处理introduction...")
-        result = self.process_prompt(self.introduction_sys_prompt, user_prompt, variable_map, llm_type)
-        return util.detail_handle(result)
+        return self.process_prompt(self.introduction_sys_prompt, user_prompt, variable_map, llm_type)
 
+    '''
+    description: 处理特征
+    param {*} self
+    param {*} user_prompt
+    param {*} variable_map
+    param {*} llm_type
+    return {*}
+    '''
     def process_features(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info(f"正在处理features...")
         return self.process_prompt(self.feature_sys_prompt, user_prompt, variable_map, llm_type)
-
+    
     def process_title(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在处理title...")
         result = self.process_prompt(self.title_sys_prompt, user_prompt, variable_map, llm_type)

@@ -21,12 +21,6 @@ def validate_json_data(json_data):
     if json_data.get("error"):
         print(f"INFO: 检测到错误信息 '{json_data.get('error')}'，停止插入数据。")
         return False
-    if json_data.get("title") in ["Just a moment...", "404"]:
-        print(f"INFO: 检测到无效标题 '{json_data.get('title')}'，停止插入数据。")
-        return False
-    if json_data.get("detail", "").startswith("### What is {product_name}?\n{product_name} is a"):
-        print(f"INFO: 无效detail开头，停止插入数据。")
-        return False
     return True
 
 
@@ -42,7 +36,13 @@ async def insert_website_data(connection_string, json_data, tag, category):
     if not validate_json_data(json_data):
         return
     conn = None
-    schema_name = "ziniao"
+    # 不同的环境模式名不一样
+    env = os.getenv('CURRENT_ENV')
+    if env == 'develop':
+        schema_name="ziniao_test"
+    print("当前模式", schema_name)
+    # schema_name="ziniao_test"
+    # schema_name = "ziniao"
     table_name = "web_navigation"
     category_name=category
     try:
