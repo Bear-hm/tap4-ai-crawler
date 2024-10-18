@@ -16,7 +16,6 @@ website_crawler = WebsitCrawler()
 
 system_auth_secret = os.getenv('AUTH_SECRET')
 
-
 # supabase数据库连接字符串
 supabass_url = os.getenv('CONNECTION_SUPABASE_URL')
 
@@ -36,6 +35,7 @@ file_handler.setFormatter(
 logger.addHandler(file_handler)
 
 logger.info(f'Logging to file: {log_file_path}')
+
 class URLRequest(BaseModel):
     url: str
     tags: Optional[List[str]] = None
@@ -59,7 +59,7 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
         # 配置了非空的auth_secret，才验证
         validate_authorization(authorization)
 
-    result = await website_crawler.scrape_website(url.strip(), tags, languages)
+    result = await website_crawler.scrape_website(url.strip(), tags, languages, )
     # 若result为None,则 code="10001"
     if result is None:
         code = 10001

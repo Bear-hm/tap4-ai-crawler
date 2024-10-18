@@ -9,10 +9,18 @@ from config import fields
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path='./.env')
+# 环境名称
+env = os.getenv('CURRENT_ENV')
+if env == 'develop':
+    schema_name="ziniao_test"
+else:
+    schema_name="ziniao"
+
+table_name = "web_navigation"
 
 def validate_json_data(json_data):
     '''
-    description: 插入数据库之前校验数据
+    description: 插入数据库之前的校验数据
     return {boolean}
     '''    
     if json_data is None:
@@ -36,15 +44,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
     if not validate_json_data(json_data):
         return
     conn = None
-    # 环境名称
-    env = os.getenv('CURRENT_ENV')
-    if env == 'develop':
-        schema_name="ziniao_test"
-    
-    print("当前模式", schema_name)
-    
-    table_name = "web_navigation"
-    
+
     category_name=category
     try:
         conn = await asyncpg.connect(dsn=connection_string,statement_cache_size=0)
@@ -52,7 +52,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
             print("INFO: Connected to the database successfully.")
         async with conn.transaction():
             existing_data = await check_existing_data(json_data["url"],json.dumps([category]),json.dumps(tag))
-            print("调用获得的existing_data", existing_data)
+            # print("调用获得的existing_data", existing_data)
 
             data = {
                 "name": json_data["name"],
@@ -74,6 +74,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
                     data[f"detail_{lang_suffix}"] = lang_data.get("detail")
                     data[f"introduction_{lang_suffix}"] = lang_data.get("introduction")
                     data[f"website_data_{lang_suffix}"] = lang_data.get("features")
+            
             # 如果有为空的设为None
             for field in fields:
                 if field not in data:
@@ -83,6 +84,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
                 update_id = existing_data['id']
                 print('更新id为：', update_id)
                 # 更新不更换关键数据
+                data.pop("name", None)
                 data.pop("image_url", None)
                 data.pop("thumbnail_url", None)
                 data.pop("url", None)
@@ -92,7 +94,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
                 update_set = ', '.join(f"{field} = ${i + 1}" for i, field in enumerate(data.keys()))
                 update_query = f'UPDATE {schema_name}.{table_name} SET {update_set} WHERE id = ${len(data) + 1}'
                 print('update_set', update_set)
-                return
+                # return
                 await conn.execute(update_query, *data.values(), update_id)
                 print("INFO: Data updated successfully.")
             else:
@@ -133,6 +135,13 @@ async def insert_website_data(connection_string, json_data, tag, category):
             print("INFO: Connection closed.")
 
 
+'''
+description: 查询数据库是否存在数据
+param {*} site_url 网址
+param {*} category 一级分类
+param {*} tags 二级分类
+return {*}
+'''
 async def check_existing_data(site_url,category, tags):
     connection_string = os.getenv('CONNECTION_SUPABASE_URL')
     print('query params: url category tags :', site_url, category, tags)
@@ -141,18 +150,12 @@ async def check_existing_data(site_url,category, tags):
         if conn:
             print("INFO: Connected to the database successfully.")
         async with conn.transaction():
-            query = """
-            SELECT id FROM ziniao.web_navigation 
-            WHERE url = $1 
-            AND category_name @> $2::jsonb 
-            AND tag_name @> $3::jsonb
-            """
-            print("sql为：", query)
+            query = f'SELECT id FROM {schema_name}.{table_name} WHERE url = $1 AND category_name @> $2::jsonb AND tag_name @> $3::jsonb'
             result = await conn.fetchrow(query, site_url, category, tags)
-            print("result为：", result)
             if result:
-                print("查找到数据成功", result['id'])
+                print("INFO: 成功查找到数据", result['id'])
                 return result
+            print("INFO: 未查找到数据")
             return None
     except Exception as e:
         print(f"INFO: Error checking existing data: {e}")

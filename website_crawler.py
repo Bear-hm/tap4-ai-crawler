@@ -113,7 +113,7 @@ class WebsitCrawler:
     param {*} languages 多语言数组
     return {*}
     '''  
-    async def scrape_website(self, url, tags, languages):
+    async def scrape_website(self, url, languages, whetheriImage=True,):
         try:
             # 记录程序开始时间
             start_time = int(time.time())
@@ -181,31 +181,35 @@ class WebsitCrawler:
             
             logger.info(f"url:{url}, title:{title},description:{description}")
 
-            # 生成网站截图
-            # image_key = oss.get_default_file_key(url)
-            # dimensions = await page.evaluate(f'''(width, height) => {{
-            #     return {{
-            #         width: {width},
-            #         height: {height},
-            #         deviceScaleFactor: window.devicePixelRatio
-            #     }};
-            # }}''', width, height)
-            
-            # # 截屏并设置图片大小
-            # screenshot_path = './' + url.replace("https://", "").replace("http://", "").replace("/", "").replace(".",
-            #                                                                                                      "-") + '.png'
-            # await page.screenshot({'path': screenshot_path, 'clip': {
-            #     'x': 0,
-            #     'y': 0,
-            #     'width': dimensions['width'],
-            #     'height': dimensions['height']
-            # }})
+            if whetheriImage:
+                #  生成网站截图
+                image_key = oss.get_default_file_key(url)
+                dimensions = await page.evaluate(f'''(width, height) => {{
+                    return {{
+                        width: {width},
+                        height: {height},
+                        deviceScaleFactor: window.devicePixelRatio
+                    }};
+                }}''', width, height)
+                
+                # 截屏并设置图片大小
+                screenshot_path = './' + url.replace("https://", "").replace("http://", "").replace("/", "").replace(".",
+                                                                                                                    "-") + '.png'
+                await page.screenshot({'path': screenshot_path, 'clip': {
+                    'x': 0,
+                    'y': 0,
+                    'width': dimensions['width'],
+                    'height': dimensions['height']
+                }})
 
-            # # 上传图片，返回图片地址
-            # screenshot_key = oss.upload_file_to_r2(screenshot_path, image_key)
+                # 上传图片，返回图片地址
+                screenshot_key = oss.upload_file_to_r2(screenshot_path, image_key)
 
-            # # 生成缩略图
-            # thumnbail_key = oss.generate_thumbnail_image(url, image_key)
+                # 生成缩略图
+                thumnbail_key = oss.generate_thumbnail_image(url, image_key)
+            else:
+                screenshot_key="http://exampscreenshot_key"
+                thumnbail_key="http://exampthumnbail_key"
 
             # 抓取整个网页内容
             content = soup.get_text()
