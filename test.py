@@ -1,5 +1,8 @@
 from util.common_util import CommonUtil
 import pandas as pd
+from util.oss_util import OSSUtil 
+oss = OSSUtil()
+
 def process_urls_from_csv(file_path):
     """处理csv文件的url地址"""
     try:
@@ -22,6 +25,21 @@ def test_get_name_by_url_domain_only(url):
     print(f"原始 URL: {url}")
     print(f"处理后生成的名字: {res}")
     
+# 手动生成图片
+def upload_image_and_generate_thumbnail(png_path):
+    """根据截图上传图片"""
+    image_key = oss.get_default_file_key(png_path)
+    original_image_key = oss.upload_file_to_r2(png_path, image_key)
+
+    thumbnail_key = oss.generate_thumbnail_image(original_image_key,image_key)
+
+    return original_image_key, thumbnail_key
+
+original_image_key, thumbnail_key = upload_image_and_generate_thumbnail("./images/openai-codex.png")
+print(f"Original image uploaded to: {original_image_key}")
+print(f"Thumbnail generated: {thumbnail_key}")
+
+
 csv_file_path = './Data/all_website_data.csv'  # 请确保这个路径是正确的
 
 # 处理 CSV 文件中的 URL

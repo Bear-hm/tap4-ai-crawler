@@ -36,25 +36,24 @@ async def insert_website_data(connection_string, json_data, tag, category):
     if not validate_json_data(json_data):
         return
     conn = None
-    # 不同的环境模式名不一样
+    # 环境名称
     env = os.getenv('CURRENT_ENV')
     if env == 'develop':
         schema_name="ziniao_test"
+    
     print("当前模式", schema_name)
-    # schema_name="ziniao_test"
-    # schema_name = "ziniao"
+    
     table_name = "web_navigation"
+    
     category_name=category
     try:
         conn = await asyncpg.connect(dsn=connection_string,statement_cache_size=0)
         if conn:
             print("INFO: Connected to the database successfully.")
         async with conn.transaction():
-            select_query = f'SELECT * FROM {schema_name}.{table_name} WHERE category_name = $1 AND tag_name = $2 AND url = $3'
-            existing_data = await conn.fetchrow(
-                select_query,
-                json.dumps([category]), json.dumps(tag), json_data["url"]
-            )
+            existing_data = await check_existing_data(json_data["url"],json.dumps([category]),json.dumps(tag))
+            print("调用获得的existing_data", existing_data)
+
             data = {
                 "name": json_data["name"],
                 "collection_time": datetime.now(),
@@ -64,7 +63,8 @@ async def insert_website_data(connection_string, json_data, tag, category):
                 "category_name": json.dumps([category_name]),
                 "tag_name": json.dumps(tag),
             }
-            # 处理多语言
+            
+            # 处理多语言字段名称
             for lang_data in json_data.get("languages", []):
                 lang_code = lang_data["language"]
                 lang_suffix = language_map.get(lang_code)
@@ -91,6 +91,8 @@ async def insert_website_data(connection_string, json_data, tag, category):
                 data.pop("id", None)
                 update_set = ', '.join(f"{field} = ${i + 1}" for i, field in enumerate(data.keys()))
                 update_query = f'UPDATE {schema_name}.{table_name} SET {update_set} WHERE id = ${len(data) + 1}'
+                print('update_set', update_set)
+                return
                 await conn.execute(update_query, *data.values(), update_id)
                 print("INFO: Data updated successfully.")
             else:
@@ -117,6 +119,7 @@ async def insert_website_data(connection_string, json_data, tag, category):
 
                 await conn.execute(query, *data_to_insert.values())
                 print("INFO: Data inserted successfully.")
+    
     except Exception as e:
         print("ERROR: Unable to connect to the database or execute query.")
         print(e)
@@ -130,23 +133,32 @@ async def insert_website_data(connection_string, json_data, tag, category):
             print("INFO: Connection closed.")
 
 
-async def check_existing_data(site_url, tags, category):
+async def check_existing_data(site_url,category, tags):
     connection_string = os.getenv('CONNECTION_SUPABASE_URL')
-    print('site tags category:', site_url, tags, category)
+    print('query params: url category tags :', site_url, category, tags)
     try:
-        conn = await asyncpg.connect(connection_string)
-        query = """
-        SELECT id FROM ziniao.web_navigation 
-        WHERE url = $1 
-        AND category_name @> $2::jsonb 
-        AND tag_name @> $3::jsonb
-        """
-        result = await conn.fetchrow(query, site_url, json.dumps([category]), json.dumps(tags))
-        await conn.close()
-        return result is not None
+        conn = await asyncpg.connect(dsn=connection_string,statement_cache_size=0)
+        if conn:
+            print("INFO: Connected to the database successfully.")
+        async with conn.transaction():
+            query = """
+            SELECT id FROM ziniao.web_navigation 
+            WHERE url = $1 
+            AND category_name @> $2::jsonb 
+            AND tag_name @> $3::jsonb
+            """
+            print("sql为：", query)
+            result = await conn.fetchrow(query, site_url, category, tags)
+            print("result为：", result)
+            if result:
+                print("查找到数据成功", result['id'])
+                return result
+            return None
     except Exception as e:
         print(f"INFO: Error checking existing data: {e}")
-        return False
+        return None
+    finally:
+        await conn.close()
 
 
 async def update_website_field(connection_string, json_data, tag, category, field_name):
@@ -292,13 +304,14 @@ async def main():
     # await insert_data_from_csv(connection_string, csv_file_path, table_name)
     file_path = './Data/res_test.json'
     data = read_file(file_path)
-    test_category = "AI工具"
-    test_tag = ['AI常用工具']
+    test_category = "tiktok"
+    test_tag = ['influencer-platform']
     if data is not None:
         connection_string = os.getenv('CONNECTION_SUPABASE_URL')
         # print('connection_string',connection_string)
         # await update_features(connection_string, data, test_tag, test_category)
         await insert_website_data(connection_string, data, test_tag, test_category)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
