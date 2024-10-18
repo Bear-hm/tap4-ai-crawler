@@ -198,6 +198,7 @@ class LLMUtil:
     '''
     def process_features(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info(f"正在处理features...")
+        print("INFO: features的user_prompt", user_prompt)
         return self.process_prompt(self.feature_sys_prompt, user_prompt, variable_map, llm_type)
     
     def process_title(self, user_prompt, variable_map=None, llm_type='openai'):

@@ -15,7 +15,7 @@ if env == 'develop':
     schema_name="ziniao_test"
 else:
     schema_name="ziniao"
-
+schema_name="ziniao"
 table_name = "web_navigation"
 
 def validate_json_data(json_data):
@@ -307,8 +307,8 @@ async def main():
     # await insert_data_from_csv(connection_string, csv_file_path, table_name)
     file_path = './Data/res_test.json'
     data = read_file(file_path)
-    test_category = "tiktok"
-    test_tag = ['influencer-platform']
+    test_category = "ai-tools"
+    test_tag = ['ai-design-tools']
     if data is not None:
         connection_string = os.getenv('CONNECTION_SUPABASE_URL')
         # print('connection_string',connection_string)

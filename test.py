@@ -35,7 +35,7 @@ def upload_image_and_generate_thumbnail(png_path):
 
     return original_image_key, thumbnail_key
 
-original_image_key, thumbnail_key = upload_image_and_generate_thumbnail("./images/openai-codex.png")
+original_image_key, thumbnail_key = upload_image_and_generate_thumbnail("./images/aimusicgenerator-me.png")
 print(f"Original image uploaded to: {original_image_key}")
 print(f"Thumbnail generated: {thumbnail_key}")
 
@@ -43,4 +43,4 @@ print(f"Thumbnail generated: {thumbnail_key}")
 csv_file_path = './Data/all_website_data.csv'  # 请确保这个路径是正确的
 
 # 处理 CSV 文件中的 URL
-process_urls_from_csv(csv_file_path)
+# process_urls_from_csv(csv_file_path)

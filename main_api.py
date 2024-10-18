@@ -53,20 +53,24 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
     print(f'Received request: {request}')
     url = request.url
     tags = request.tags 
-    languages = request.languages  # 需要翻译的多语言列表
+    languages = request.languages 
     category = request.category
+
     if system_auth_secret:
         # 配置了非空的auth_secret，才验证
         validate_authorization(authorization)
 
-    result = await website_crawler.scrape_website(url.strip(), tags, languages, )
+
+    # result = await website_crawler.scrape_website(url.strip(), tags, languages, )
+    result = await website_crawler.scrape_website(url.strip(), languages, whetheriImage=False)
     # 若result为None,则 code="10001"
-    if result is None:
+    if result is None or (isinstance(result, dict) and 'error' in result):
         code = 10001
-        msg = 'fail'
+        msg = result['error'] if isinstance(result, dict) else 'fail'
+    else:
+        code = 200
+        msg = 'success'
     
-    code = 200
-    msg = 'success'
     # 将数据映射到 'data' 键下
     response = {
         'code': code,
@@ -74,7 +78,7 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
         'data': result
     }
 
-    with open('./Log/res_data.json', 'a', encoding='utf-8') as file:
+    with open('./Log/res_data.json', 'r', encoding='utf-8') as file:
         json.dump(result, file, ensure_ascii=False)
         file.write('\n')
 

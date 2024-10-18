@@ -1,4 +1,5 @@
 import asyncio
+import json
 from bs4 import BeautifulSoup
 import time
 import random
@@ -113,7 +114,7 @@ class WebsitCrawler:
     param {*} languages 多语言数组
     return {*}
     '''  
-    async def scrape_website(self, url, languages, whetheriImage=True,):
+    async def scrape_website(self, url, languages, whetheriImage=True):
         try:
             # 记录程序开始时间
             start_time = int(time.time())
@@ -161,9 +162,9 @@ class WebsitCrawler:
             origin_content = await page.content()
             soup = BeautifulSoup(origin_content, 'html.parser')
 
-            title = soup.title.string.strip() if soup.title else ''
-            if not title:
-                title = check.check_title(llm.process_title(url))
+            # title = soup.title.string.strip() if soup.title else ''
+            # if not title:
+            title = check.check_title(llm.process_title(url))
             # 根据url提取域名生成name
 
             name = CommonUtil.get_name_by_url(url)
@@ -216,11 +217,28 @@ class WebsitCrawler:
 
             # return;
             
-            detail = check.check_detail(llm.process_detail(content))
-            
-            introduction = check.check_introduction(llm.process_introduction(content))
-                
-            features = check.check_feature(llm.process_features(content))
+            # introduction = check.check_introduction(llm.process_introduction(content))
+            introduction = llm.process_introduction(content)
+
+
+            var_map = {
+                "{productname}": "title"
+            }
+            # 检查markdown
+            detail = check.check_format(llm.process_detail(content, variable_map=var_map))
+            features = check.check_format(llm.process_features(content))
+
+            data = {
+                'title': title,
+                'description': description,
+                'detail': detail,
+                'introduction': introduction,
+                'features': features
+            }
+            json_data = json.dumps(data, ensure_ascii=False, indent=4)
+            print("data", data)
+            with open('./Log/res_noLang.json', 'w', encoding='utf-8') as f:
+                f.write(json_data)
 
             if not all([title, description, detail, introduction, features]):
                 logger.error(f"URL: {url} - 数据有空值，返回错误")
@@ -267,7 +285,7 @@ class WebsitCrawler:
                 'languages': processed_languages,
             }
         except Exception as e:
-            logger.error("处理" + url + "站点异常，错误信息:", e)
+            logger.error("处理%s站点异常，错误信息: %s", url, str(e))
             return None
         finally:
             # 计算程序执行时间
