@@ -224,12 +224,35 @@ def convert_data_format(file_path, output_path):
     extracted_data.to_csv(output_path, index=False)
     print(f"成功提取数据并处理了数据格式保存至 {output_path}。")
 
+def find_unique_ids(file1_path, file2_path, output_path):
+    """
+    比较两个CSV文件中的id数据，找出只出现在一个文件中的id，并将其写入新的CSV文件。
+
+    :param file1_path: 第一个CSV文件的路径
+    :param file2_path: 第二个CSV文件的路径
+    :param output_path: 输出CSV文件的路径
+    """
+    # 读取两个CSV文件
+    file1 = pd.read_csv(file1_path)
+    file2 = pd.read_csv(file2_path)
+
+
+    unique_rows_file1 = file1[~file1['id'].isin(file2['id'])]
+
+    unique_rows_file2 = file2[~file2['id'].isin(file1['id'])]
+
+    unique_rows = pd.concat([unique_rows_file1, unique_rows_file2], ignore_index=True)
+
+    unique_rows.to_csv(output_path, index=False)
+
+
 if __name__ == '__main__':
     input_path = "./Data/web_navigation_rows.csv"
     output_path = "./Data/web_navigation_rowsresetid.csv"
     # remove_rows_by_id('./Data/cate.csv', 901, 1192, './Data/saved_file.csv', save_mode=True)
     # obtain_csv_data('./Data/web_navigation_rows.csv', './Data/database_website_data.csv')
-    convert_data_format('./Data/database_website_data.csv', './Data/website_data.csv')
+    # convert_data_format('./Data/database_website_data.csv', './Data/website_data.csv')
+    find_unique_ids('./Data/web_navigation_rows10.20.csv', './Data/web_navigation_rows10.19.csv', './Data/unique_ids.csv')
     # reset_id_column(input_path, output_path)
     # add_quotation(
     #     './Data/navigation_tag_rows_resetid.csv',

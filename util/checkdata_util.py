@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from groq import Groq
 from openai import OpenAI
 from transformers import LlamaTokenizer
-
+from config import language_flip
 from util.common_util import CommonUtil
 
 # 设置日志记录
@@ -202,8 +202,10 @@ class CheckUtil:
         return self.process_prompt(self.format_check_prompt, user_prompt, variable_map, llm_type)
     
     def check_language(self, language, user_prompt):
-        logger.info(f"正在检查多语言:{language}, user_prompt:{user_prompt}")
-        result = self.process_prompt(self.language_check_prompt.replace("{language}", language), user_prompt)
-        
-        logger.info(f"多语言:{language}, 处理结果:{result}")
+        full_language = language_flip.get(language) 
+        logger.info(f"正在检查多语言:{full_language}, user_prompt:{user_prompt}")
+        print(full_language)
+        print("language_check_prompt:", self.language_check_prompt.replace("{language}", full_language))
+        result = self.process_prompt(self.language_check_prompt.replace("{language}", full_language), user_prompt)
+        logger.info(f"多语言:{full_language}, 处理结果:{result}")
         return result
