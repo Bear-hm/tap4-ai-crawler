@@ -166,43 +166,13 @@ class CheckUtil:
         except Exception as e:
             logger.error(f"LLM处理失败", e)
             return None
-
-    # def check_title(self, user_prompt, variable_map=None, llm_type='openai'):    
-    #     logger.info("正在检查title...")
-    #     result = self.process_prompt(self.title_check_prompt, user_prompt, variable_map, llm_type)
-    #     if result:
-    #         result = result.replace('"', '')
-    #     return result
-    
-    # def check_description(self, user_prompt, variable_map=None, llm_type='openai'):    
-    #     logger.info("正在检查description...")
-    #     result = self.process_prompt(self.description_check_prompt, user_prompt, variable_map, llm_type)
-    #     return result
-
-    # def check_introduction(self, user_prompt, variable_map=None, llm_type='openai'):    
-    #     logger.info("正在检查title...")
-    #     result = self.process_prompt(self.introduction_check_prompt, user_prompt, variable_map, llm_type)
-    #     if result:
-    #         result = result.replace('"', '')
-    #     return result
-
-    # def check_feature(self, user_prompt, variable_map=None, llm_type='openai'):    
-    #     logger.info("正在检查feature...")
-    #     result = self.process_prompt(self.feature_check_prompt, user_prompt, variable_map, llm_type)
-    #     if result:
-    #         result = result.replace('"', '')
-    #     return result
-
-    # def check_detail(self, user_prompt, variable_map=None, llm_type='openai'):
-    #     logger.info("正在检查Detail...")
-    #     return self.process_prompt(self.detail_check_prompt, user_prompt, variable_map, llm_type)
     
     def check_format(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info(f"正在处理 格式化...")
         return self.process_prompt(self.format_check_prompt, user_prompt, variable_map, llm_type)
     
     def check_language(self, language, user_prompt):
-        full_language = language_flip.get(language) 
+        full_language = language_flip.get(language, language) 
         logger.info(f"正在检查多语言:{full_language}, user_prompt:{user_prompt}")
         print(full_language)
         print("language_check_prompt:", self.language_check_prompt.replace("{language}", full_language))

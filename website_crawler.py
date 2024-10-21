@@ -164,21 +164,14 @@ class WebsitCrawler:
 
             # title = soup.title.string.strip() if soup.title else ''
             # if not title:
-            title = check.check_title(llm.process_title(url))
-            # 根据url提取域名生成name
+            title = llm.process_title(url)
 
+            # 根据url提取域名生成name
             name = CommonUtil.get_name_by_url(url)
 
             # 获取网页描述
             description = ''
-            meta_description = soup.find('meta', attrs={'name': 'description'})
-            if meta_description:
-                description = meta_description['content'].strip()
-            if not description:
-                meta_description = soup.find('meta', attrs={'property': 'og:description'})
-                description = meta_description['content'].strip()
-            if not description:
-                description = check.check_description(llm.process_description(url))
+            description = llm.process_description(url)
             
             logger.info(f"url:{url}, title:{title},description:{description}")
 
@@ -272,18 +265,30 @@ class WebsitCrawler:
             
 
             logger.info(url + "站点处理成功")
-            return {
-                'name': name,
-                'url': url,
-                'title': title,
-                'description': description,
-                'features': features,
-                'detail': detail,
-                'introduction': introduction,
-                'screenshot_data': screenshot_key,
-                'screenshot_thumbnail_data': thumnbail_key,
-                'languages': processed_languages,
-            }
+            if whetheriImage:
+                return {
+                    'name': name,
+                    'url': url,
+                    'title': title,
+                    'description': description,
+                    'features': features,
+                    'detail': detail,
+                    'introduction': introduction,
+                    'screenshot_data': screenshot_key,
+                    'screenshot_thumbnail_data': thumnbail_key,
+                    'languages': processed_languages,
+                }
+            else:
+                return {
+                    'name': name,
+                    'url': url,
+                    'title': title,
+                    'description': description,
+                    'features': features,
+                    'detail': detail,
+                    'introduction': introduction,
+                    'languages': processed_languages,
+                }
         except Exception as e:
             logger.error("处理%s站点异常，错误信息: %s", url, str(e))
             return None

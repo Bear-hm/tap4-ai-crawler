@@ -37,7 +37,7 @@ async def fetch_and_check_data(connection_string):
     '''
     conn = None
     retries = 0
-    current_id = 1
+    current_id = 323
 
     try:
         # 只在开始时连接数据库

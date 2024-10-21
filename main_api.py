@@ -78,7 +78,7 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
         'data': result
     }
 
-    with open('./Log/res_data.json', 'r', encoding='utf-8') as file:
+    with open('./Log/res_data.json', 'a', encoding='utf-8') as file:
         json.dump(result, file, ensure_ascii=False)
         file.write('\n')
 

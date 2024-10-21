@@ -90,7 +90,8 @@ def handle_request(site_data, log_file_path):
             log_file.write(log_message)
 
 # data_path = './Data/feature.csv'
-data_path = './Data/website_data_test.csv'
+data_path = './Data/website_data.csv'
+# data_path = './Data/website_data_test.csv'
 all_site_data = load_site_data(data_path)
 
 # 打开日志文件，以追加模式写入

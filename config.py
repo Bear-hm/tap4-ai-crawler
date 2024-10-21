@@ -31,6 +31,15 @@ language_flip = {
     "jp": "Japanese",
     "pt": "Portuguese",
     "ru": "Russian",
+    "zh-CN": "Chinese (Simplified)",
+    "zh-TW": "Chinese (Traditional)",
+    "en": "English",
+    "German": "German",
+    "es": "Spanish",
+    "fr": "French",
+    "Japanese": "Japanese",
+    "Portuguese": "Portuguese",
+    "ru": "Russian",
 }
 
 # 数据库字段
@@ -89,7 +98,6 @@ fields = [
     "content_ru",
     "content_tw"
 ]
-
     # "website_data_cn",
     # "website_data_en",
     # "website_data_de",
@@ -137,5 +145,12 @@ fields = [
     # "content_tw"
 
 fields_to_check = [
-    "title_ru"
+    "title_cn",
+    "title_en",
+    "title_de",
+    "title_es",
+    "title_fr",
+    "title_jp",
+    "title_pt",
+    "title_tw",
 ]
