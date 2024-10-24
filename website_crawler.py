@@ -230,7 +230,7 @@ class WebsitCrawler:
             }
             json_data = json.dumps(data, ensure_ascii=False, indent=4)
             print("data", data)
-            with open('./Log/res_noLang.json', 'w', encoding='utf-8') as f:
+            with open('./Log/res_noLang.json', 'a', encoding='utf-8') as f:
                 f.write(json_data)
 
             if not all([title, description, detail, introduction, features]):
@@ -265,30 +265,19 @@ class WebsitCrawler:
             
 
             logger.info(url + "站点处理成功")
-            if whetheriImage:
-                return {
-                    'name': name,
-                    'url': url,
-                    'title': title,
-                    'description': description,
-                    'features': features,
-                    'detail': detail,
-                    'introduction': introduction,
-                    'screenshot_data': screenshot_key,
-                    'screenshot_thumbnail_data': thumnbail_key,
-                    'languages': processed_languages,
-                }
-            else:
-                return {
-                    'name': name,
-                    'url': url,
-                    'title': title,
-                    'description': description,
-                    'features': features,
-                    'detail': detail,
-                    'introduction': introduction,
-                    'languages': processed_languages,
-                }
+
+            return {
+                'name': name,
+                'url': url,
+                'title': title,
+                'description': description,
+                'features': features,
+                'detail': detail,
+                'introduction': introduction,
+                'screenshot_data': screenshot_key,
+                'screenshot_thumbnail_data': thumnbail_key,
+                'languages': processed_languages,
+            }
         except Exception as e:
             logger.error("处理%s站点异常，错误信息: %s", url, str(e))
             return None

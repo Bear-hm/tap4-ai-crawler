@@ -308,6 +308,8 @@ async def main():
     file_path = './Data/res_test.json'
     data = read_file(file_path)
     test_category = "ai-tools"
+    # test_tag = ['domain-registration']
+    # ai-tools,['ai-design-tools']
     test_tag = ['ai-design-tools']
     if data is not None:
         connection_string = os.getenv('CONNECTION_SUPABASE_URL')
