@@ -159,6 +159,7 @@ class LLMUtil:
         return {*}
         '''        
         logger.info("正在处理description...")
+        logger.info("用户提示：", user_prompt)
         result = self.process_prompt(self.description_sys_prompt, user_prompt, variable_map, llm_type)
         if result:
             result = result.replace('"', '')
@@ -174,6 +175,7 @@ class LLMUtil:
     '''
     def process_detail(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在处理Detail...")
+        logger.info("用户提示：", user_prompt)
         return self.process_prompt(self.detail_sys_prompt, user_prompt, variable_map, llm_type)
 
     '''
@@ -186,6 +188,7 @@ class LLMUtil:
     '''
     def process_introduction(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info(f"正在处理introduction...")
+        logger.info("用户提示：", user_prompt)
         return self.process_prompt(self.introduction_sys_prompt, user_prompt, variable_map, llm_type)
 
     '''
@@ -203,6 +206,7 @@ class LLMUtil:
     
     def process_title(self, user_prompt, variable_map=None, llm_type='openai'):
         logger.info("正在处理title...")
+        logger.info("用户提示：", user_prompt)
         result = self.process_prompt(self.title_sys_prompt, user_prompt, variable_map, llm_type)
         if result:
             result = result.replace('"', '')

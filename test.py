@@ -35,7 +35,7 @@ def upload_image_and_generate_thumbnail(png_path):
 
     return original_image_key, thumbnail_key
 
-original_image_key, thumbnail_key = upload_image_and_generate_thumbnail("./images/humanize.png")
+original_image_key, thumbnail_key = upload_image_and_generate_thumbnail("./images/DangAI.png")
 print(f"Original image uploaded to: {original_image_key}")
 print(f"Thumbnail generated: {thumbnail_key}")
 

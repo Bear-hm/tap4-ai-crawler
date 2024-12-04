@@ -15,7 +15,7 @@ if env == 'develop':
     schema_name="ziniao_test"
 else:
     schema_name="ziniao"
-schema_name="ziniao"
+schema_name="ziniao_test"
 table_name = "web_navigation"
 
 def validate_json_data(json_data):

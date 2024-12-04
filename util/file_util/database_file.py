@@ -2,6 +2,7 @@
 import pandas as pd
 import os
 import csv
+
 def clean_data(row):
     """清理数据，去掉 category_name 和 tag_name 字段外面的双引号"""
     row['category_name'] = row['category_name'].strip('[]"')
@@ -247,13 +248,13 @@ def find_unique_ids(file1_path, file2_path, output_path):
 
 
 if __name__ == '__main__':
-    input_path = "./Data/web_navigation_rows.csv"
-    output_path = "./Data/web_navigation_rowsresetid.csv"
+    input_path = "./Data/haveId_website_data.csv"
+    output_path = "./Data/resetId_website.csv"
     # remove_rows_by_id('./Data/cate.csv', 901, 1192, './Data/saved_file.csv', save_mode=True)
-    # obtain_csv_data('./Data/web_navigation_rows.csv', './Data/database_website_data.csv')
+    # obtain_csv_data('./Data/database_website_data.csv', './Data/haveId_website_data.csv')
     # convert_data_format('./Data/database_website_data.csv', './Data/website_data.csv')
-    find_unique_ids('./Data/web_navigation_rows10.20.csv', './Data/web_navigation_rows10.19.csv', './Data/unique_ids.csv')
-    # reset_id_column(input_path, output_path)
+    # find_unique_ids('./Data/web_navigation_rows10.20.csv', './Data/web_navigation_rows10.19.csv', './Data/unique_ids.csv')
+    reset_id_column(input_path, output_path)
     # add_quotation(
     #     './Data/navigation_tag_rows_resetid.csv',
     #     './Data/navigation_tag_rows_resetid_updated.csv',

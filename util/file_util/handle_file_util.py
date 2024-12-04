@@ -114,4 +114,4 @@ def handle_submit_data(input_file_path, output_file_path):
 if __name__ == '__main__':
     # handle_submit_data('../../Data/submit.csv', '../../Data/hulian.csv')
     # read_site_data_file(csv_file_path, output_path)
-    sort_by_category('./Data/delete_modified_file.csv', './Data/cate.csv')
+    sort_by_category('./Data/resetId_website.csv', './Data/database_data.csv')

@@ -61,8 +61,7 @@ async def scrape(request: URLRequest, authorization: Optional[str] = Header(None
         validate_authorization(authorization)
 
 
-    # result = await website_crawler.scrape_website(url.strip(), tags, languages, )
-    result = await website_crawler.scrape_website(url.strip(), languages, whetheriImage=False)
+    result = await website_crawler.scrape_website(url.strip(), languages, whetheriImage=True)
     # 若result为None,则 code="10001"
     if result is None or (isinstance(result, dict) and 'error' in result):
         code = 10001
